@@ -46,6 +46,18 @@ int main()
 }
 " CLANG_HAVE_PROPER_CHARCONV)
 
+target_compile_options(acore-compile-option-interface
+  INTERFACE
+  #-finstrument-functions)
+  -finstrument-functions-after-inlining)
+
+target_link_options(acore-compile-option-interface
+  INTERFACE
+  #-finstrument-functions)
+  -finstrument-functions-after-inlining)
+
+message(STATUS "Clang: Enabled function instrumentation")
+
 if(WITH_WARNINGS)
   target_compile_options(acore-warning-interface
     INTERFACE

@@ -65,6 +65,20 @@ void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTi
 void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTimerRef, int32 banExpiryCheckInterval, boost::system::error_code const& error);
 variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile);
 
+extern "C" {
+void __attribute__((no_instrument_function)) __cyg_profile_func_enter(void *func,  void *caller)
+{
+  printf("enter");
+  //printf("enter %p\n", func);
+}
+
+void __attribute__((no_instrument_function)) __cyg_profile_func_exit (void *func,  void *caller)
+{
+  printf("exit");
+  //printf("exit %p\n", func);
+}
+}
+
 /// Launch the auth server
 int main(int argc, char** argv)
 {
