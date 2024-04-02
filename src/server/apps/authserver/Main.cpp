@@ -16,12 +16,12 @@
  */
 
 /**
-* @file main.cpp
-* @brief Authentication Server main program
-*
-* This file contains the main program for the
-* authentication server
-*/
+ * @file main.cpp
+ * @brief Authentication Server main program
+ *
+ * This file contains the main program for the
+ * authentication server
+ */
 
 #include "AppenderDB.h"
 #include "AuthSocketMgr.h"
@@ -60,27 +60,35 @@ namespace fs = std::filesystem;
 
 bool StartDB();
 void StopDB();
-void SignalHandler(std::weak_ptr<Acore::Asio::IoContext> ioContextRef, boost::system::error_code const& error, int signalNumber);
-void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTimerRef, int32 dbPingInterval, boost::system::error_code const& error);
-void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTimerRef, int32 banExpiryCheckInterval, boost::system::error_code const& error);
-variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile);
+void SignalHandler(std::weak_ptr<Acore::Asio::IoContext> ioContextRef, boost::system::error_code const &error, int signalNumber);
+void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTimerRef, int32 dbPingInterval, boost::system::error_code const &error);
+void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTimerRef, int32 banExpiryCheckInterval, boost::system::error_code const &error);
+variables_map GetConsoleArguments(int argc, char **argv, fs::path &configFile);
 
-extern "C" {
-void __attribute__((no_instrument_function)) __cyg_profile_func_enter(void *func,  void *caller)
+void testfunc()
 {
-  printf("enter");
-  //printf("enter %p\n", func);
 }
 
-void __attribute__((no_instrument_function)) __cyg_profile_func_exit (void *func,  void *caller)
+extern "C"
 {
-  printf("exit");
-  //printf("exit %p\n", func);
-}
+    void __attribute__((no_instrument_function)) __cyg_profile_func_enter(void *func, void *caller)
+    {
+        // use snprintf to avoid stack overflow
+        // char buffer[1024];
+        // snprintf(buffer, sizeof(buffer), "enter %p\n", func);
+
+        // printf(buffer);
+    }
+
+    void __attribute__((no_instrument_function)) __cyg_profile_func_exit(void *func, void *caller)
+    {
+        // printf("exit");
+        //  printf("exit %p\n", func);
+    }
 }
 
 /// Launch the auth server
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     Acore::Impl::CurrentServerProcessHolder::_type = SERVER_PROCESS_AUTHSERVER;
     signal(SIGABRT, &Acore::AbortHandler);
@@ -103,7 +111,8 @@ int main(int argc, char** argv)
     sLog->RegisterAppender<AppenderDB>();
     sLog->Initialize(nullptr);
 
-    Acore::Banner::Show("authserver",
+    Acore::Banner::Show(
+        "authserver",
         [](std::string_view text)
         {
             LOG_INFO("server.authserver", text);
@@ -117,7 +126,8 @@ int main(int argc, char** argv)
 
     OpenSSLCrypto::threadsSetup();
 
-    std::shared_ptr<void> opensslHandle(nullptr, [](void*) { OpenSSLCrypto::threadsCleanup(); });
+    std::shared_ptr<void> opensslHandle(nullptr, [](void *)
+                                        { OpenSSLCrypto::threadsCleanup(); });
 
     // authserver PID file creation
     std::string pidFile = sConfigMgr->GetOption<std::string>("PidFile", "");
@@ -141,14 +151,16 @@ int main(int argc, char** argv)
     // Load IP Location Database
     sIPLocation->Load();
 
-    std::shared_ptr<void> dbHandle(nullptr, [](void*) { StopDB(); });
+    std::shared_ptr<void> dbHandle(nullptr, [](void *)
+                                   { StopDB(); });
 
     std::shared_ptr<Acore::Asio::IoContext> ioContext = std::make_shared<Acore::Asio::IoContext>();
 
     // Get the list of realms for the server
     sRealmList->Initialize(*ioContext, sConfigMgr->GetOption<int32>("RealmsStateUpdateDelay", 20));
 
-    std::shared_ptr<void> sRealmListHandle(nullptr, [](void*) { sRealmList->Close(); });
+    std::shared_ptr<void> sRealmListHandle(nullptr, [](void *)
+                                           { sRealmList->Close(); });
 
     if (sRealmList->GetRealms().empty())
     {
@@ -179,7 +191,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    std::shared_ptr<void> sAuthSocketMgrHandle(nullptr, [](void*) { sAuthSocketMgr.StopNetwork(); });
+    std::shared_ptr<void> sAuthSocketMgrHandle(nullptr, [](void *)
+                                               { sAuthSocketMgr.StopNetwork(); });
 
     // Set signal handlers
     boost::asio::signal_set signals(*ioContext, SIGINT, SIGTERM);
@@ -242,7 +255,7 @@ void StopDB()
     MySQL::Library_End();
 }
 
-void SignalHandler(std::weak_ptr<Acore::Asio::IoContext> ioContextRef, boost::system::error_code const& error, int /*signalNumber*/)
+void SignalHandler(std::weak_ptr<Acore::Asio::IoContext> ioContextRef, boost::system::error_code const &error, int /*signalNumber*/)
 {
     if (!error)
     {
@@ -253,7 +266,7 @@ void SignalHandler(std::weak_ptr<Acore::Asio::IoContext> ioContextRef, boost::sy
     }
 }
 
-void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTimerRef, int32 dbPingInterval, boost::system::error_code const& error)
+void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTimerRef, int32 dbPingInterval, boost::system::error_code const &error)
 {
     if (!error)
     {
@@ -268,7 +281,7 @@ void KeepDatabaseAliveHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> dbPingTi
     }
 }
 
-void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTimerRef, int32 banExpiryCheckInterval, boost::system::error_code const& error)
+void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTimerRef, int32 banExpiryCheckInterval, boost::system::error_code const &error)
 {
     if (!error)
     {
@@ -283,14 +296,10 @@ void BanExpiryHandler(std::weak_ptr<Acore::Asio::DeadlineTimer> banExpiryCheckTi
     }
 }
 
-variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile)
+variables_map GetConsoleArguments(int argc, char **argv, fs::path &configFile)
 {
     options_description all("Allowed options");
-    all.add_options()
-        ("help,h", "print usage message")
-        ("version,v", "print version build info")
-        ("dry-run,d", "Dry run")
-        ("config,c", value<fs::path>(&configFile)->default_value(fs::path(sConfigMgr->GetConfigPath() + std::string(_ACORE_REALM_CONFIG))), "use <arg> as configuration file");
+    all.add_options()("help,h", "print usage message")("version,v", "print version build info")("dry-run,d", "Dry run")("config,c", value<fs::path>(&configFile)->default_value(fs::path(sConfigMgr->GetConfigPath() + std::string(_ACORE_REALM_CONFIG))), "use <arg> as configuration file");
 
     variables_map variablesMap;
 
@@ -299,7 +308,7 @@ variables_map GetConsoleArguments(int argc, char** argv, fs::path& configFile)
         store(command_line_parser(argc, argv).options(all).allow_unregistered().run(), variablesMap);
         notify(variablesMap);
     }
-    catch (std::exception const& e)
+    catch (std::exception const &e)
     {
         std::cerr << e.what() << "\n";
     }
